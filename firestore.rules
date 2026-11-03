@@ -1,0 +1,147 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // Bootstrap only the Firebase Auth identity shown by the project owner.
+    // UIDs come from the signed Firebase token and cannot be supplied by the client.
+    function isBootstrapAdmin() {
+      return signedIn()
+        && request.auth.uid == 'FnVGalePiRhNiXv55CpFDT8MG6I3';
+    }
+
+    // Admin access comes from a protected users/{uid}.role field, with the one
+    // verified bootstrap account above allowed to establish the first admin.
+    function isAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function validUserProfile(userId) {
+      return request.resource.data.keys().hasOnly([
+          'uid', 'name', 'email', 'photoURL', 'role', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.keys().hasAll(['uid', 'name', 'email', 'photoURL', 'role', 'createdAt', 'updatedAt'])
+        && request.resource.data.uid == userId
+        && (request.resource.data.role == 'student'
+          || (isBootstrapAdmin() && request.resource.data.role == 'admin'))
+        && request.resource.data.name is string
+        && request.resource.data.email is string
+        && request.resource.data.photoURL is string
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    match /users/{userId} {
+      // Students may read only their own profile. Admin profiles can read all.
+      allow get: if signedIn() && (request.auth.uid == userId || isAdmin());
+      allow list: if isAdmin();
+
+      // Login creates users/{Firebase Auth UID}; only the verified bootstrap
+      // account can start with the admin role.
+      allow create: if signedIn()
+        && request.auth.uid == userId
+        && validUserProfile(userId);
+
+      // Owners may update basic profile fields, but never UID or role.
+      // Authorized admins can update role assignments and manage profiles.
+      allow update: if (isAdmin()
+          && request.resource.data.keys().hasOnly([
+            'uid', 'name', 'email', 'photoURL', 'role', 'createdAt', 'updatedAt', 'department'
+          ])
+          && request.resource.data.uid == resource.data.uid
+          && request.resource.data.createdAt == resource.data.createdAt
+          && request.resource.data.role in ['student', 'admin']
+          && request.resource.data.updatedAt == request.time)
+        || (signedIn()
+          && request.auth.uid == userId
+          && request.resource.data.uid == resource.data.uid
+          && request.resource.data.role == resource.data.role
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'name', 'email', 'photoURL', 'updatedAt'
+          ])
+          && request.resource.data.name is string
+          && request.resource.data.email is string
+          && request.resource.data.photoURL is string
+          && request.resource.data.updatedAt == request.time);
+
+      // The allowlisted verified project owner can promote only their own
+      // existing student profile during initial administrator setup.
+      allow update: if isBootstrapAdmin()
+        && request.auth.uid == userId
+        && resource.data.role == 'student'
+        && request.resource.data.role == 'admin'
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role', 'updatedAt'])
+        && request.resource.data.updatedAt == request.time;
+
+      allow delete: if isAdmin();
+    }
+
+    match /complaints/{complaintId} {
+      // Students must constrain list queries to studentId == their Firebase UID.
+      allow get, list: if signedIn() && (isAdmin() || resource.data.studentId == request.auth.uid);
+
+      // A complaint is created at the top level with an auto-ID. The student
+      // cannot set status, priority, department, or assignment fields on create.
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly([
+          'studentId', 'title', 'description', 'category', 'status',
+          'createdAt', 'updatedAt', 'imageUrls'
+        ])
+        && request.resource.data.keys().hasAll(['studentId', 'title', 'description', 'status', 'createdAt', 'updatedAt'])
+        && request.resource.data.studentId == request.auth.uid
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 160
+        && request.resource.data.description is string
+        && request.resource.data.description.size() > 0
+        && request.resource.data.description.size() <= 10000
+        && request.resource.data.status == 'Submitted'
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time
+        && (!('category' in request.resource.data) || request.resource.data.category is string)
+        && (!('imageUrls' in request.resource.data) || request.resource.data.imageUrls is list);
+
+      // Students cannot edit status, assignment, department, or priority. Those
+      // changes and complaint deletion belong only to trusted administrators.
+      allow update: if isAdmin()
+        && request.resource.data.keys().hasOnly([
+          'studentId', 'title', 'description', 'category', 'status', 'priority',
+          'department', 'assignedAdminUid', 'createdAt', 'updatedAt', 'imageUrls',
+          'resolution', 'resolvedAt'
+        ])
+        && request.resource.data.studentId == resource.data.studentId
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.status in [
+          'Submitted', 'Under Review', 'In Progress', 'Resolved', 'Closed'
+        ]
+        && request.resource.data.updatedAt == request.time
+        && (!('department' in request.resource.data) || request.resource.data.department is string)
+        && (!('priority' in request.resource.data) || request.resource.data.priority in ['Low', 'Medium', 'High', 'Urgent']);
+      allow delete: if isAdmin();
+    }
+
+    match /notifications/{notificationId} {
+      // The recipient can read only their own notifications; admins can read all.
+      allow get, list: if signedIn() && (isAdmin() || resource.data.recipientUid == request.auth.uid);
+      // Notifications are generated by trusted admin workflows, not students.
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /activityLogs/{logId} {
+      // Audit history is visible only to admins and is append-only.
+      allow get, list: if isAdmin();
+      allow create: if isAdmin();
+      allow update, delete: if false;
+    }
+
+    // Deny every other collection, including unrecognized sensitive collections.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
