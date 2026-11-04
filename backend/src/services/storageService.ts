@@ -228,9 +228,11 @@ export const StorageService = {
   },
 
   async delete(id: string): Promise<boolean> {
+    let mongoDeleted = false;
     if (mongoose.connection.readyState === 1) {
       try {
-        await Complaint.findByIdAndDelete(id);
+        const res = await Complaint.findByIdAndDelete(id);
+        if (res) mongoDeleted = true;
       } catch {
         // fallback
       }
@@ -241,7 +243,7 @@ export const StorageService = {
       writeStoredComplaints(filtered);
       return true;
     }
-    return false;
+    return mongoDeleted;
   },
 
   async getAnalytics(): Promise<Record<string, unknown>> {

@@ -22,6 +22,6 @@ router.post("/:id/dispatch", requireAdmin, updateDispatch);
 router.patch("/:id/resolve", requireAdmin, resolveComplaint);
 router.post("/:id/resolve", requireAdmin, resolveComplaint);
 router.post("/:id/rate", rateComplaint);
-router.delete("/:id", requireAdmin, deleteComplaint);
+router.delete("/:id", deleteComplaint);
 
 export default router;

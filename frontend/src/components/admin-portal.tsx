@@ -16,6 +16,7 @@ import {
   Search,
   ShieldCheck,
   Star,
+  Trash2,
   UserCheck,
 } from "lucide-react";
 import { useCampusAuth } from "@/components/auth-provider";
@@ -825,6 +826,31 @@ function DispatchCard({
     }
   }
 
+  async function deleteReport() {
+    if (!window.confirm("Are you sure you want to permanently delete this report?")) {
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/complaints/${complaint.id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: "Bearer dev-admin",
+        },
+      });
+      if (res.ok) {
+        onSaved();
+      } else {
+        alert("Failed to delete report from database.");
+      }
+    } catch (err) {
+      console.error("Delete report error:", err);
+      alert("Network error: failed to delete report.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   const shownSuggestion = aiSuggestion || suggestion;
 
   return (
@@ -885,9 +911,21 @@ function DispatchCard({
           )}
         </div>
 
-        <span className={`admin-status ${status.toLowerCase().replaceAll(" ", "-")}`}>
-          {status}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className={`admin-status ${status.toLowerCase().replaceAll(" ", "-")}`}>
+            {status}
+          </span>
+          <button
+            type="button"
+            onClick={() => void deleteReport()}
+            disabled={saving}
+            title="Permanently delete this report"
+            className="inline-flex items-center gap-1 px-2 py-1 text-[9px] font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 rounded border border-rose-200 transition-colors disabled:opacity-50"
+          >
+            <Trash2 size={11} />
+            <span>Delete</span>
+          </button>
+        </div>
       </div>
 
       {/* Quick Status Action Buttons */}

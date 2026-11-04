@@ -14,6 +14,7 @@ import {
   Search,
   ShieldCheck,
   Star,
+  Trash2,
   Wrench,
 } from "lucide-react";
 import { useCampusAuth } from "@/components/auth-provider";
@@ -254,6 +255,30 @@ export function StudentPortal() {
       );
     } catch (err) {
       console.error("Failed to save resolution rating:", err);
+    }
+  }
+
+  async function handleDeleteComplaint(complaintId: string) {
+    if (!window.confirm("Are you sure you want to delete this report?")) {
+      return;
+    }
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/complaints/${complaintId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: "Bearer dev-student",
+        },
+      });
+      if (res.ok) {
+        setComplaints((prev) => prev.filter((c) => c.id !== complaintId));
+        setSuccess("Report deleted successfully.");
+        window.setTimeout(() => setSuccess(""), 3000);
+      } else {
+        alert("Could not delete report from the server.");
+      }
+    } catch (err) {
+      console.error("Delete error:", err);
+      alert("Network error: failed to delete report.");
     }
   }
 
@@ -545,6 +570,7 @@ export function StudentPortal() {
                 item={item}
                 onOpenLightbox={openLightbox}
                 onRateResolution={handleRateResolution}
+                onDelete={handleDeleteComplaint}
               />
             ))}
           </div>
@@ -572,15 +598,18 @@ function ReportCard({
   item,
   onOpenLightbox,
   onRateResolution,
+  onDelete,
 }: {
   item: Complaint;
   onOpenLightbox: (images: string[], index?: number) => void;
   onRateResolution: (complaintId: string, rating: number, feedback: string) => Promise<void>;
+  onDelete: (complaintId: string) => Promise<void>;
 }) {
   const [userRating, setUserRating] = useState<number>(item.rating || 0);
   const [feedbackText, setFeedbackText] = useState<string>(item.feedback || "");
   const [ratingSaved, setRatingSaved] = useState<boolean>(Boolean(item.rating));
   const [savingRating, setSavingRating] = useState<boolean>(false);
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
   const urgencyClass = (item.urgency || "medium").toLowerCase();
 
@@ -598,6 +627,12 @@ function ReportCard({
     setRatingSaved(true);
   };
 
+  const handleDeleteClick = async () => {
+    setIsDeleting(true);
+    await onDelete(item.id);
+    setIsDeleting(false);
+  };
+
   return (
     <article className="student-report-item flex-col items-stretch">
       <div className="flex items-start gap-3 w-full">
@@ -609,7 +644,19 @@ function ReportCard({
             <span className="font-mono text-[9px] text-slate-500">
               {item.category || "CAMPUS ISSUE"} · {item.id.slice(0, 11).toUpperCase()}
             </span>
-            <span className="student-status">{item.status}</span>
+            <div className="flex items-center gap-2">
+              <span className="student-status">{item.status}</span>
+              <button
+                type="button"
+                onClick={handleDeleteClick}
+                disabled={isDeleting}
+                title="Delete this report"
+                className="inline-flex items-center gap-1 px-2 py-1 text-[9px] font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 rounded border border-rose-200 transition-colors disabled:opacity-50"
+              >
+                <Trash2 size={11} />
+                <span>{isDeleting ? "Deleting..." : "Delete"}</span>
+              </button>
+            </div>
           </div>
 
           <h3>{item.title}</h3>
