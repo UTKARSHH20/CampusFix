@@ -9,12 +9,12 @@ import {
   Check,
   ClipboardList,
   CopyCheck,
+  Cpu,
   Eye,
   LogOut,
   MapPin,
   Search,
   ShieldCheck,
-  Sparkles,
   Star,
   UserCheck,
 } from "lucide-react";
@@ -421,7 +421,7 @@ export function AdminPortal() {
         <section className="admin-ai-panel">
           <div className="admin-ai-intro">
             <span className="admin-ai-icon">
-              <Sparkles size={16} />
+              <Cpu size={16} />
             </span>
             <div>
               <span className="admin-eyebrow">GEMINI FLASH CAMPUS BRIEFING</span>
@@ -941,7 +941,7 @@ function DispatchCard({
       <section className="admin-triage" aria-label="Triage suggestion">
         <div className="admin-triage-heading">
           <span className="admin-triage-spark">
-            <Sparkles size={13} />
+            <Cpu size={13} />
           </span>
           <div>
             <b>{aiSuggestion ? "Gemini Flash recommendation" : "Quick triage suggestion"}</b>
@@ -1061,7 +1061,7 @@ function DispatchCard({
             disabled={draftingResolution || saving}
             title="Auto-draft a student-facing repair explanation with AI"
           >
-            <Sparkles size={11} />
+            <Cpu size={11} />
             {draftingResolution ? "Drafting…" : "Draft Note with AI"}
           </button>
         </div>
