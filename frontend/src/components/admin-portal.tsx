@@ -58,6 +58,7 @@ const departments = [
 ];
 const statuses = ["Submitted", "Under Review", "In Progress", "Resolved", "Closed"];
 const priorities = ["Low", "Medium", "High", "Urgent"];
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
 
 type TriageSuggestion = {
   category: string;
@@ -197,7 +198,7 @@ export function AdminPortal() {
 
   const refreshComplaints = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/complaints", {
+      const res = await fetch(`${BACKEND_URL}/api/complaints`, {
         headers: { Authorization: "Bearer dev-admin" },
       });
       if (res.ok) {
@@ -220,7 +221,7 @@ export function AdminPortal() {
     let ignore = false;
     async function load() {
       try {
-        const res = await fetch("http://localhost:5000/api/complaints", {
+        const res = await fetch(`${BACKEND_URL}/api/complaints`, {
           headers: { Authorization: "Bearer dev-admin" },
         });
         if (res.ok && !ignore) {
@@ -785,7 +786,7 @@ function DispatchCard({
       }
 
       if (finalStatus === "Resolved") {
-        await fetch(`http://localhost:5000/api/complaints/${complaint.id}/resolve`, {
+        await fetch(`${BACKEND_URL}/api/complaints/${complaint.id}/resolve`, {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
@@ -798,7 +799,7 @@ function DispatchCard({
         });
       }
 
-      const res = await fetch(`http://localhost:5000/api/complaints/${complaint.id}/dispatch`, {
+      const res = await fetch(`${BACKEND_URL}/api/complaints/${complaint.id}/dispatch`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

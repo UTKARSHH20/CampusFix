@@ -71,6 +71,7 @@ const campusLocations = [
 ];
 
 const urgencyLevels = ["Low", "Medium", "High", "Urgent"] as const;
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
 
 const defaultStudent = {
   uid: "student-1",
@@ -105,7 +106,7 @@ export function StudentPortal() {
     let ignore = false;
     async function load() {
       try {
-        const res = await fetch("http://localhost:5000/api/complaints", {
+        const res = await fetch(`${BACKEND_URL}/api/complaints`, {
           headers: { Authorization: "Bearer dev-student" },
         });
         if (res.ok && !ignore) {
@@ -196,7 +197,7 @@ export function StudentPortal() {
       const photoUrls = await Promise.all(selectedPhotos.map((file) => fileToDataUrl(file)));
 
       setUploadProgress("Saving to backend database...");
-      const response = await fetch("http://localhost:5000/api/complaints", {
+      const response = await fetch(`${BACKEND_URL}/api/complaints`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -240,7 +241,7 @@ export function StudentPortal() {
 
   async function handleRateResolution(complaintId: string, rating: number, feedback: string) {
     try {
-      await fetch(`http://localhost:5000/api/complaints/${complaintId}/rate`, {
+      await fetch(`${BACKEND_URL}/api/complaints/${complaintId}/rate`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
