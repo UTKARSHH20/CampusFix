@@ -90,7 +90,7 @@ service cloud.firestore {
       allow create: if signedIn()
         && request.resource.data.keys().hasOnly([
           'studentId', 'title', 'description', 'category', 'status',
-          'createdAt', 'updatedAt', 'imageUrls'
+          'createdAt', 'updatedAt', 'imageUrls', 'location', 'locationDetails', 'urgency'
         ])
         && request.resource.data.keys().hasAll(['studentId', 'title', 'description', 'status', 'createdAt', 'updatedAt'])
         && request.resource.data.studentId == request.auth.uid
@@ -104,15 +104,20 @@ service cloud.firestore {
         && request.resource.data.createdAt == request.time
         && request.resource.data.updatedAt == request.time
         && (!('category' in request.resource.data) || request.resource.data.category is string)
-        && (!('imageUrls' in request.resource.data) || request.resource.data.imageUrls is list);
+        && (!('imageUrls' in request.resource.data) || request.resource.data.imageUrls is list)
+        && (!('location' in request.resource.data) || request.resource.data.location is string)
+        && (!('locationDetails' in request.resource.data) || request.resource.data.locationDetails is string)
+        && (!('urgency' in request.resource.data) || request.resource.data.urgency in ['Low', 'Medium', 'High', 'Urgent']);
 
       // Students cannot edit status, assignment, department, or priority. Those
       // changes and complaint deletion belong only to trusted administrators.
-      allow update: if isAdmin()
+      // Students may submit rating and feedback on resolved complaints.
+      allow update: if (isAdmin()
         && request.resource.data.keys().hasOnly([
           'studentId', 'title', 'description', 'category', 'status', 'priority',
-          'department', 'assignedAdminUid', 'createdAt', 'updatedAt', 'imageUrls',
-          'resolution', 'resolvedAt'
+          'department', 'assignedAdminUid', 'assignedStaff', 'createdAt', 'updatedAt', 'imageUrls',
+          'location', 'locationDetails', 'urgency',
+          'resolution', 'resolvedAt', 'resolutionProofUrls', 'rating', 'feedback'
         ])
         && request.resource.data.studentId == resource.data.studentId
         && request.resource.data.createdAt == resource.data.createdAt
@@ -121,7 +126,14 @@ service cloud.firestore {
         ]
         && request.resource.data.updatedAt == request.time
         && (!('department' in request.resource.data) || request.resource.data.department is string)
-        && (!('priority' in request.resource.data) || request.resource.data.priority in ['Low', 'Medium', 'High', 'Urgent']);
+        && (!('priority' in request.resource.data) || request.resource.data.priority in ['Low', 'Medium', 'High', 'Urgent']))
+        || (signedIn()
+          && request.auth.uid == resource.data.studentId
+          && resource.data.status in ['Resolved', 'Closed']
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rating', 'feedback', 'updatedAt'])
+          && (!('rating' in request.resource.data) || request.resource.data.rating is number)
+          && (!('feedback' in request.resource.data) || request.resource.data.feedback is string)
+          && request.resource.data.updatedAt == request.time);
       allow delete: if isAdmin();
     }
 

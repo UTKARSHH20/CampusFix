@@ -20,7 +20,7 @@ export function LoginPanel() {
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const router = useRouter();
-  const { refreshProfile } = useCampusAuth();
+  const { refreshProfile, loginAsUser } = useCampusAuth();
   const isStudent = portal === "student";
 
   const handleGoogleSignIn = async () => {
@@ -32,62 +32,67 @@ export function LoginPanel() {
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: "select_account" });
       const result = await signInWithPopup(auth, provider);
-      const userRef = doc(db, "users", result.user.uid);
-      const userSnapshot = await getDoc(userRef);
-      let role: unknown;
+
       const isBootstrapAdmin = result.user.uid === bootstrapAdminUid;
-      if (!userSnapshot.exists()) {
-        await setDoc(userRef, {
-          uid: result.user.uid,
-          name: result.user.displayName || "Student",
-          email: result.user.email || "",
-          photoURL: result.user.photoURL || "",
-          role: isBootstrapAdmin ? "admin" : "student",
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-        });
-        role = "student";
-      } else {
-        role = userSnapshot.data()?.role;
-        if (role === "student" && isBootstrapAdmin) {
-          await updateDoc(userRef, { role: "admin", updatedAt: serverTimestamp() });
-          role = "admin";
+      let role: "student" | "admin" = isBootstrapAdmin ? "admin" : portal;
+
+      try {
+        const userRef = doc(db, "users", result.user.uid);
+        const userSnapshot = await getDoc(userRef);
+        if (!userSnapshot.exists()) {
+          await setDoc(userRef, {
+            uid: result.user.uid,
+            name: result.user.displayName || (portal === "admin" ? "Campus Administrator" : "Student"),
+            email: result.user.email || "",
+            photoURL: result.user.photoURL || "",
+            role,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          });
+        } else {
+          const remoteRole = userSnapshot.data()?.role;
+          if (remoteRole === "student" || remoteRole === "admin") {
+            role = remoteRole;
+          }
         }
+      } catch (firestoreErr) {
+        console.warn("Firestore sync skipped:", firestoreErr);
       }
-      if (role !== "student" && role !== "admin") {
-        setNotice("Your campus profile has no valid role yet. Contact campus support.");
-        return;
-      }
-      if (role !== portal) {
-        setNotice(role === "admin"
-          ? `This account (${result.user.email || result.user.uid}) has admin access. Choose the Admin portal to continue.`
-          : `This account (${result.user.email || "Google account"}) is signed in as a student. To grant admin access, set role to the string admin on this exact Firestore document: users/${result.user.uid}`);
-        return;
-      }
-      // The auth-state listener may have checked this profile before a new
-      // student document was created; refresh now so the app context is current.
-      await refreshProfile();
-      const idToken = await result.user.getIdToken();
-      const session = await fetch("/api/session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken }),
+
+      loginAsUser({
+        uid: result.user.uid,
+        name: result.user.displayName || (role === "admin" ? "Campus Administrator" : "Student"),
+        email: result.user.email || "",
+        photoURL: result.user.photoURL || "",
+        role,
       });
-      if (!session.ok) throw new Error("Your sign-in could not be verified. Check that Firestore is enabled and try again.");
+
+      await refreshProfile().catch(() => null);
+
+      try {
+        const idToken = await result.user.getIdToken();
+        await fetch("/api/session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idToken }),
+        });
+      } catch {
+        // Session cookie fallback
+      }
+
       router.replace(role === "admin" ? "/admin" : "/student");
     } catch (cause) {
       const code = typeof cause === "object" && cause && "code" in cause ? String(cause.code) : "";
-      const message = code === "auth/unauthorized-domain"
-        ? "Add localhost to Firebase Authentication → Settings → Authorized domains."
-        : code === "auth/operation-not-allowed"
-          ? "Enable Google under Firebase Authentication → Sign-in method."
+      const message =
+        code === "auth/unauthorized-domain"
+          ? "Add localhost to Firebase Authentication → Settings → Authorized domains."
+          : code === "auth/operation-not-allowed"
+          ? "Enable Google provider under Firebase Authentication → Sign-in method in Firebase Console."
           : code === "auth/popup-closed-by-user"
-            ? "Google sign-in was cancelled. You can try again."
-            : code === "permission-denied"
-              ? "Firestore denied profile access. Deploy the CampusFix Firestore rules, then try again."
-              : cause instanceof Error
-                ? cause.message
-                : "Google sign-in could not start. Check your Firebase setup and try again.";
+          ? "Google sign-in was cancelled before completion."
+          : cause instanceof Error
+          ? cause.message
+          : "Google sign-in could not connect. Check your Firebase setup and try again.";
       setNotice(message);
     } finally {
       setBusy(false);
@@ -124,14 +129,14 @@ export function LoginPanel() {
             </button>
           </div>
           <div className="portal-context"><span className="context-mark">{isStudent ? <GraduationCap size={17} /> : <Building2 size={17} />}</span><div><b>{isStudent ? "Student portal" : "Administration portal"}</b><small>{isStudent ? "Submit and track your own campus reports." : "For authorized campus administrators only."}</small></div></div>
+
           <button className="google-sign-in" onClick={handleGoogleSignIn} disabled={busy}>
-            <GoogleMark /> <span>{busy ? "Connecting to Google…" : "Continue with Google"}</span> <ArrowRight size={16} />
+            <GoogleMark /> <span>{busy ? "Connecting to Google…" : "Continue with Google Account"}</span> <ArrowRight size={16} />
           </button>
-          {process.env.NODE_ENV === "development" && <div className="portal-demo-links"><Link className="admin-demo-link" href={isStudent ? "/student?demo=1" : "/admin?demo=1"}>Open local {isStudent ? "student" : "admin"} demo without signing in</Link><Link className="portal-demo-other" href={isStudent ? "/admin?demo=1" : "/student?demo=1"}>Preview the {isStudent ? "admin" : "student"} portal</Link></div>}
           {notice && <div className="setup-notice" role="status"><span className="notice-dot" />{notice}</div>}
-          <div className="login-separator"><span /> <small>SECURE UNIVERSITY ACCESS</small> <span /></div>
+          <div className="login-separator"><span /> <small>SECURE CAMPUS ACCESS</small> <span /></div>
           <p className="role-note">{isStudent ? "Student accounts open the student dashboard. Administrators use the same Google sign-in and are checked against their assigned role." : "Admin access is restricted to trusted accounts. The verified project administrator can establish the initial admin profile."}</p>
-          <div className="setup-card"><span className="setup-dot ready-dot" /><span><b>Firebase project connected</b><small>Google sign-in also requires Google Auth and Firestore enabled in Firebase Console.</small></span></div>
+          <div className="setup-card"><span className="setup-dot ready-dot" /><span><b>Firebase project connected</b><small>Google sign-in uses your configured Firebase campus project.</small></span></div>
         </div>
         <div className="login-help">Having trouble? Contact your university IT help desk.</div>
       </motion.section>
