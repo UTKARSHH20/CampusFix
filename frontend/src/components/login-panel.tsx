@@ -9,6 +9,7 @@ import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { doc, getDoc, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
 import { getFirebaseClient } from "@/lib/firebase/client";
 import { useCampusAuth } from "@/components/auth-provider";
+import { CampusIllustration } from "@/components/campus-illustrations";
 
 type Portal = "student" | "admin";
 const bootstrapAdminUid = "FnVGalePiRhNiXv55CpFDT8MG6I3";
@@ -110,6 +111,7 @@ export function LoginPanel() {
           <span className="login-overline">KIIT UNIVERSITY</span>
           <h1>Campus care<br />with <em>follow-through.</em></h1>
           <p>A shared place to report campus problems, understand what happens next, and keep every team accountable.</p>
+          <CampusIllustration scene="repair" className="login-illustration" label="CampusFix character helping resolve a campus issue" />
         </div>
         <div className="privacy-promise"><ShieldCheck size={18} /><div><b>Your Google password stays with Google.</b><span>Sign-in uses Google’s secure authorization flow.</span></div></div>
         <span className="brand-side-index">CAMPUSFIX · STUDENT &amp; CAMPUS SERVICES</span>
