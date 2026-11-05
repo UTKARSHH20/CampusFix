@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   Wifi,
 } from "lucide-react";
+import { CampusIllustration } from "@/components/campus-illustrations";
 
 export default function Home() {
   return (
@@ -32,38 +33,57 @@ export default function Home() {
       <section className="hero-section">
         <div className="hero-copy">
           <div className="eyebrow"><span className="eyebrow-dot" /> KIIT UNIVERSITY <span className="eyebrow-line" /> CAMPUS CARE</div>
-          <h1>Campus maintenance and incident resolution system</h1>
-          <p className="hero-description">An integrated operations platform connecting students directly with university maintenance departments for fast, accountable repair dispatch and tracking.</p>
+          <h1>Campus issues, <em>fixed together.</em></h1>
+          <p className="hero-description">One clear place to report campus problems, follow every update, and make sure the right team sees the work through.</p>
           <div className="hero-actions">
-            <Link className="button button-primary" href="/login?portal=student">Sign in to report <ArrowRight size={16} /></Link>
-            <a className="quiet-link" href="#how-it-works">Review operations flow <ArrowDownRight size={15} /></a>
+            <Link className="button button-primary" href="/login?portal=student">Report an issue <ArrowRight size={16} /></Link>
+            <a className="quiet-link" href="#how-it-works">See how it works <ArrowDownRight size={15} /></a>
           </div>
-          <div className="trust-note"><ShieldCheck size={15} /><span>Connected campus maintenance network</span><span className="trust-divider">·</span><span>Real-time dispatch and automated triage</span></div>
+          <div className="trust-note"><ShieldCheck size={15} /><span>Clear ownership</span><span className="trust-divider">·</span><span>Visible progress</span><span className="trust-divider">·</span><span>Verified resolution</span></div>
         </div>
 
-        <aside className="sample-panel" aria-label="Example triage routing">
-          <div className="sample-heading"><span className="sample-icon"><Cpu size={16} /></span><div><b>Automated triage and routing</b><small>INCIDENT DISPATCH PREVIEW</small></div><span className="preview-tag">SYSTEM PREVIEW</span></div>
+        <aside className="sample-panel sample-panel--illustrated" aria-label="How a campus report moves to resolution">
+          <div className="sample-heading"><span className="sample-icon"><Cpu size={16} /></span><div><b>From report to resolution</b><small>A CLEARER CAMPUS FEEDBACK LOOP</small></div><span className="preview-tag">CAMPUSFIX</span></div>
+          <CampusIllustration scene="report" className="hero-illustration" />
           <div className="sample-quote">“The Wi-Fi in my hostel has not been working for two days.”</div>
           <div className="triage-rule" />
-          <div className="triage-label">PREDICTED DISPATCH ROUTE</div>
-          <div className="triage-row"><span className="triage-symbol wifi-symbol"><Wifi size={17} /></span><span className="triage-text"><b>Network / Wi-Fi</b><small>Classified issue category</small></span><span className="match-score">High match</span></div>
-          <div className="triage-row"><span className="triage-symbol urgency-symbol"><ArrowUpRight size={17} /></span><span className="triage-text"><b>High priority</b><small>48-hour disruption detected</small></span><span className="urgency-pill">HIGH</span></div>
-          <div className="triage-row"><span className="triage-symbol team-symbol"><Building2 size={16} /></span><span className="triage-text"><b>IT Department</b><small>Target response unit</small></span><Check className="confirmed-icon" size={16} /></div>
-          <div className="sample-foot"><span><Cpu size={13} /> Machine intelligence classification</span><span>Operator-approved dispatch</span></div>
+          <div className="triage-label">WHAT HAPPENS NEXT</div>
+          <div className="triage-row"><span className="triage-symbol wifi-symbol"><Wifi size={17} /></span><span className="triage-text"><b>Report is categorised</b><small>Network / Wi-Fi issue</small></span><span className="match-score">01</span></div>
+          <div className="triage-row"><span className="triage-symbol team-symbol"><Building2 size={16} /></span><span className="triage-text"><b>Campus team is assigned</b><small>Clear ownership and updates</small></span><Check className="confirmed-icon" size={16} /></div>
+          <div className="sample-foot"><span><Cpu size={13} /> Suggestions can assist triage</span><span>People approve the action</span></div>
         </aside>
       </section>
 
       <section className="portal-section" id="portals">
-        <div className="section-heading"><div><div className="eyebrow muted-eyebrow">DEDICATED WORKSPACES</div><h2>Targeted portals for students and staff</h2></div><p>Purpose-built interfaces for student submissions and administrative dispatch operations.</p></div>
+        <div className="section-heading"><div><div className="eyebrow muted-eyebrow">DEDICATED WORKSPACES</div><h2>One campus. Two connected teams.</h2></div><p>Simple tools for students to speak up and for campus teams to follow through.</p></div>
         <div className="portal-grid">
-          <article className="portal-card student-card"><div className="portal-index"><span className="portal-badge">STUDENT PORTAL</span></div><div className="portal-icon"><ClipboardCheck size={19} /></div><h3>For Students</h3><p>Submit incident reports with photographic evidence and track live repair progress from dispatch to completion.</p><ul><li><Check size={14} /> Submit detailed issue reports</li><li><Check size={14} /> Track technician assignment</li><li><Check size={14} /> Rate completed work with feedback</li></ul><Link href="/login?portal=student" className="portal-link">Sign in as student <ArrowRight size={15} /></Link></article>
-          <article className="portal-card admin-card"><div className="portal-index"><span className="portal-badge">ADMIN PORTAL</span></div><div className="portal-icon admin-icon"><Building2 size={18} /></div><h3>For Campus Teams</h3><p>Manage incoming work queues, dispatch maintenance personnel, and identify recurring facility bottlenecks.</p><ul><li><Check size={14} /> Triage and assign response units</li><li><Check size={14} /> Track departmental workloads</li><li><Check size={14} /> Detect duplicate issue submissions</li></ul><Link href="/login?portal=admin" className="portal-link">Sign in as administrator <ArrowRight size={15} /></Link></article>
+          <article className="portal-card student-card">
+            <div className="portal-index"><span className="portal-badge">01 / STUDENT PORTAL</span></div>
+            <CampusIllustration scene="report" className="portal-illustration" label="Illustration of a student filing a campus report" />
+            <h3>Make the issue visible.</h3><p>Share what happened, add a photo and location, then follow the progress without chasing updates.</p>
+            <ul><li><Check size={14} /> Submit detailed issue reports</li><li><Check size={14} /> Track technician assignment</li><li><Check size={14} /> Rate completed work with feedback</li></ul>
+            <Link href="/login?portal=student" className="portal-link">Open student portal <ArrowRight size={15} /></Link>
+          </article>
+          <article className="portal-card admin-card">
+            <div className="portal-index"><span className="portal-badge">02 / ADMIN PORTAL</span></div>
+            <CampusIllustration scene="dashboard" className="portal-illustration" label="Illustration of an administrator reviewing campus issue patterns" />
+            <h3>Turn reports into action.</h3><p>Review incoming work, assign the right team and spot repeated problems across campus.</p>
+            <ul><li><Check size={14} /> Triage and assign response units</li><li><Check size={14} /> Track departmental workloads</li><li><Check size={14} /> Detect duplicate issue submissions</li></ul>
+            <Link href="/login?portal=admin" className="portal-link">Open admin portal <ArrowRight size={15} /></Link>
+          </article>
         </div>
       </section>
 
-      <section className="how-section" id="how-it-works"><div className="how-intro"><div className="eyebrow muted-eyebrow">OPERATIONAL LIFECYCLE</div><h2>Structured incident resolution from start to finish</h2><p>Every logged incident follows an auditable lifecycle with assigned departmental ownership and timestamped resolution proof.</p><Link href="/student" className="quiet-link">Access portal <ArrowRight size={15} /></Link></div><div className="steps-list"><div className="step"><div><b>Issue Submission &amp; Photo Capture</b><p>Provide specific location details and attach clear photo evidence directly from your device.</p></div></div><div className="step"><div><b>Automated Triage &amp; Routing</b><p>System assesses urgency, identifies duplicate reports, and routes the ticket to Facilities, IT, or Housekeeping.</p></div></div><div className="step"><div><b>Dispatch &amp; Verified Completion</b><p>Assigned technician completes repair work, submits resolution documentation, and collects student verification.</p></div></div></div></section>
+      <section className="how-section" id="how-it-works">
+        <div className="how-intro"><div className="eyebrow muted-eyebrow">OPERATIONAL LIFECYCLE</div><h2>From “something is broken” to “all fixed”.</h2><p>Every report gets a path, an owner and a clear outcome.</p><CampusIllustration scene="resolved" className="how-illustration" /><Link href="/student" className="quiet-link">Access student portal <ArrowRight size={15} /></Link></div>
+        <div className="steps-list">
+          <div className="step"><span>01</span><div><b>Report the issue</b><p>Add the details, location and a photo so the team knows what needs attention.</p></div><span className="step-mark">↗</span></div>
+          <div className="step"><span>02</span><div><b>Review and assign</b><p>The report is reviewed, prioritised and routed to the right campus team.</p></div><span className="step-mark">↗</span></div>
+          <div className="step"><span>03</span><div><b>Repair and verify</b><p>Work is recorded, proof is shared and the student can confirm the resolution.</p></div><span className="step-mark">✓</span></div>
+        </div>
+      </section>
 
-      <footer className="site-footer"><Link className="brand footer-brand" href="/"><span className="brand-icon"><span /><span /><span /></span><span>Campus<span className="brand-pulse">Fix</span><i>.</i></span></Link><span>Institutional maintenance management system</span><Link href="/student"><CircleHelp size={14} /> Student support</Link></footer>
+      <footer className="site-footer"><Link className="brand footer-brand" href="/"><span className="brand-icon"><span /><span /><span /></span><span>Campus<span className="brand-pulse">Fix</span><i>.</i></span></Link><span>Campus care, with follow-through.</span><Link href="/student"><CircleHelp size={14} /> Student support</Link></footer>
     </main>
   );
 }
