@@ -1,15 +1,8 @@
-"use client";
-
-import { motion, useReducedMotion } from "framer-motion";
-
 export type CampusScene = "report" | "repair" | "dashboard" | "resolved";
 
 type Props = { scene?: CampusScene; className?: string; label?: string };
 
 export function CampusIllustration({ scene = "report", className = "", label }: Props) {
-  const reduceMotion = useReducedMotion();
-  const duration = reduceMotion ? 0 : 2.8;
-
   return (
     <div className={`campus-illustration campus-illustration--${scene} ${className}`} role="img" aria-label={label ?? ({
       report: "A student character submitting a campus issue report",
